@@ -1,0 +1,20 @@
+use strict;
+use warnings;
+use Module::Build;
+
+my $builder = Module::Build->new(
+    add_to_cleanup      => [ 'WebService-Leanpub-*' ],
+    create_makefile_pl  => 'small',
+    dist_abstract       => 'Access the Leanpub API.',
+    dist_author         => 'Mathias Weidner <mamawe@cpan.org>',
+    dist_version_from   => 'lib/WebService/Leanpub.pm',
+    module_name         => 'WebService::Leanpub',
+    license             => 'perl',
+    requires => {
+        'Test::More' => 0,
+        'version'    => 0,
+    },
+    script_files	=> [ 'bin/leanpub', ],
+);
+
+$builder->create_build_script();
