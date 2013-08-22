@@ -18,6 +18,7 @@ my %opt = (
     really => 0,
 );
 
+Getopt::Long::Configure('require_order');
 GetOptions( \%opt,
     'api_key=s', 'slug=s',
     'really',
@@ -36,7 +37,9 @@ pod2usage(0) unless ($cmd);
 my $wl = WebService::Leanpub->new($opt{api_key},$opt{slug});
 
 if ($cmd =~ /^individual/i) {
-    my $ip = $wl->get_individual_purchases();
+    my %lopt = ( page => 1, );
+    GetOptions( \%lopt, 'page=i' );
+    my $ip = $wl->get_individual_purchases( { page => $lopt{page} } );
     print $ip if ($ip);
 }
 elsif ($cmd =~ /^job_status/i) {
@@ -138,7 +141,10 @@ Provide the book's slug.
 
 =item individual_purchases
 
-Retrieve data about individual purchases
+Retrieve data about individual purchases.
+
+This command takes the option C<< -page >> to set the page of the individual
+purchases report to be retrieved.
 
 =item job_status
 

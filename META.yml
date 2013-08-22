@@ -15,10 +15,11 @@ name: WebService-Leanpub
 provides:
   WebService::Leanpub:
     file: lib/WebService/Leanpub.pm
-    version: v0.0.1
+    version: v0.0.2
 requires:
+  LWP::UserAgent: 0
   Test::More: 0
   version: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: v0.0.1
+version: v0.0.2

@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use Carp;
 
-use version; our $VERSION = qv('0.0.1');
+use version; our $VERSION = qv('0.0.2');
 
 use LWP::UserAgent;
 
@@ -34,8 +34,9 @@ sub new {
 
 sub get_individual_purchases {
     my ($self,$opt) = @_;
-
-    return $self->_get_request( { path => '/individual_purchases.json' } );
+    my $req = { path => '/individual_purchases.json' };
+    $req->{var} = { page => $opt->{page} } if ($opt->{page});
+    return $self->_get_request($req);
 
 } # get_individual_purchases()
 
@@ -88,6 +89,13 @@ sub _get_request {
 
     my $req = $lpurl . $self->{slug} . $opt->{path}
             . '?api_key=' . $self->{api_key};
+    if ($opt->{var}) {
+	my $vars = '';
+	foreach my $var (keys %{$opt->{var}}) {
+	    $vars .= "&$var=" . $opt->{var}->{$var}; # XXX HTML escape!
+	}
+	$req .= $vars;
+    }
     my $res = $self->{ua}->get($req);
 
     if ($res->is_success) {
@@ -145,7 +153,19 @@ C<< https::/leanpub.com/your_book >>, the slug woud be I<your_book>.
 
 =head2 get_individual_purchases()
 
+=head2 get_individual_purchases( $opt )
+
 Get the data for individual purchases.
+
+Optionally this method takes as argument a hash reference with this key:
+
+=over
+
+=item C<< page >>
+
+the page of the individual purchases data.
+
+=back
 
 =head2 get_job_status()
 

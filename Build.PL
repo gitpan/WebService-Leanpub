@@ -11,8 +11,9 @@ my $builder = Module::Build->new(
     module_name         => 'WebService::Leanpub',
     license             => 'perl',
     requires => {
-        'Test::More' => 0,
-        'version'    => 0,
+	'LWP::UserAgent'    => 0,
+        'Test::More'	    => 0,
+        'version'	    => 0,
     },
     script_files	=> [ 'bin/leanpub', ],
 );
