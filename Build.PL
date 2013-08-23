@@ -13,6 +13,7 @@ my $builder = Module::Build->new(
     requires => {
 	'LWP::UserAgent'    => 0,
         'Test::More'	    => 0,
+	'URI::Escape'	    => 0,
         'version'	    => 0,
     },
     script_files	=> [ 'bin/leanpub', ],

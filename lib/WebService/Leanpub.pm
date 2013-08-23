@@ -4,16 +4,10 @@ use warnings;
 use strict;
 use Carp;
 
-use version; our $VERSION = qv('0.0.2');
+use version; our $VERSION = qv('0.0.3');
 
 use LWP::UserAgent;
-
-# Other recommended modules (uncomment to use):
-#  use IO::Prompt;
-#  use Perl6::Export;
-#  use Perl6::Slurp;
-#  use Perl6::Say;
-
+use URI::Escape;
 
 # Module implementation here
 
@@ -23,11 +17,16 @@ sub new {
     my ($self, $api_key, $slug) = @_;
     my $type = ref($self) || $self;
 
+    unless ($api_key) { die "Missing API key for Leanpub"; }
+    unless ($slug)    { die "Missing SLUG for book"; }
+
     $self = bless {}, $type;
 
-    $self->{api_key} = $api_key;
-    $self->{slug}    = $slug;
-    $self->{ua}      = LWP::UserAgent->new();
+    $self->{api_key} = uri_escape($api_key);
+    $self->{slug}    = uri_escape($slug);
+    $self->{ua}      = LWP::UserAgent->new(
+	agent => "libwebservice-leanpub-perl/$VERSION",
+    );
 
     return $self;
 } # new()
@@ -87,16 +86,14 @@ sub publish {
 sub _get_request {
     my ($self,$opt) = @_;
 
-    my $req = $lpurl . $self->{slug} . $opt->{path}
+    my $url = $lpurl . $self->{slug} . $opt->{path}
             . '?api_key=' . $self->{api_key};
     if ($opt->{var}) {
-	my $vars = '';
 	foreach my $var (keys %{$opt->{var}}) {
-	    $vars .= "&$var=" . $opt->{var}->{$var}; # XXX HTML escape!
+	    $url .= "&$var=" . uri_escape($opt->{var}->{$var});
 	}
-	$req .= $vars;
     }
-    my $res = $self->{ua}->get($req);
+    my $res = $self->{ua}->get($url);
 
     if ($res->is_success) {
 	return $res->decoded_content;
@@ -185,23 +182,23 @@ This will publish your book without emailing your readers.
 
 =head1 DIAGNOSTICS
 
-=for author to fill in:
-    List every single error and warning message that the module can
-    generate (even the ones that will "never happen"), with a full
-    explanation of each problem, one or more likely causes, and any
-    suggested remedies.
-
 =over
 
-=item C<< Error message here, perhaps with %s placeholders >>
+=item C<< Missing API key for Leanpub >>
 
-[Description of error here]
+Since the Leanpub API only works with an API key from leanpub.com, you have to
+provide an API key as first argument to WebService::Leanpub->new().
 
-=item C<< Another error message here >>
+=item C<< Missing SLUG for book >>
 
-[Description of error here]
+Since every action in the Leanpub API involves a book which is identified by a
+slug, you have to provide the slug as the second argument to
+WebService::Leanpub->new().
 
-[Et cetera, et cetera]
+A slug is the part after the hostname in the Leanpub URL of your book. So for
+instance for the Book "Using the Leanpub API with Perl" which has the URL
+L<< https://leanpub.com/using-the-leanpub-api-with-perl >> the slug is
+C<using-the-leanpub-api-with-perl>.
 
 =back
 
