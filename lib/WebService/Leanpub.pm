@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use Carp;
 
-use version; our $VERSION = qv('0.0.3');
+use version; our $VERSION = qv('0.0.4');
 
 use LWP::UserAgent;
 use URI::Escape;
@@ -75,6 +75,12 @@ sub publish {
     my $form = {
 	api_key => $self->{api_key},
     };
+    if ($opt->{email_readers}) {
+	$form->{'publish[email_readers]'} = 'true';
+    }
+    if (exists $opt->{release_notes}) {
+	$form->{'publish[release_notes]'} = $opt->{release_notes};
+    }
     my $res = $self->{ua}->post($url, $form);
 
     if ($res->is_success) {
@@ -176,9 +182,24 @@ Get the sales data.
 
 Start a preview of your book.
 
-=head2 publish()
+=head2 publish( $opt )
 
 This will publish your book without emailing your readers.
+
+The argument C<$opt> is a hash reference with the following keys:
+
+=over
+
+=item email_readers
+
+If the corresponding value evaluates to I<true>, an email is sent to the
+readers.
+
+=item release_notes
+
+The value corresponding to this key is sent as release note.
+
+=back
 
 =head1 DIAGNOSTICS
 
