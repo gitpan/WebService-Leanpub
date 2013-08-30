@@ -51,6 +51,10 @@ elsif ($cmd =~ /^job_status/i) {
     my $js = $wl->get_job_status();
     print $js if ($js);
 }
+elsif ($cmd =~ /^partial/i) {
+    my $pv = $wl->partial_preview();
+    print $pv if ($pv);
+}
 elsif ($cmd =~ /^preview/i) {
     my $pv = $wl->preview();
     print $pv if ($pv);
@@ -160,6 +164,10 @@ purchases report to be retrieved.
 =item job_status
 
 Retrieve the status of the last job.
+
+=item partial_preview
+
+Start a partial preview of your book using Preview.txt.
 
 =item preview
 

@@ -4,6 +4,7 @@ use Module::Build;
 
 my $builder = Module::Build->new(
     add_to_cleanup      => [ 'WebService-Leanpub-*' ],
+    configure_requires  => { 'Module::Build' => 0.38, },
     create_makefile_pl  => 'small',
     dist_abstract       => 'Access the Leanpub API.',
     dist_author         => 'Mathias Weidner <mamawe@cpan.org>',

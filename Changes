@@ -1,5 +1,9 @@
 Revision history for WebService-Leanpub
 
+0.1.0  Fri Aug 30 09:24:55 CEST 2013
+    - WebService/Leanpub.pm: added partial_preview()
+    - bin/leanpub: added command partial_preview
+
 0.0.4  Mon Aug 26 23:18:30 CEST 2013
     - bin/leanpub: added option --version
     - bin/leanpub: added documentation for configuration files

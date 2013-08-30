@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use Carp;
 
-use version; our $VERSION = qv('0.0.4');
+use version; our $VERSION = qv('0.1.0');
 
 use LWP::UserAgent;
 use URI::Escape;
@@ -53,40 +53,29 @@ sub get_sales_data {
 
 } # get_sales_data()
 
+sub partial_preview {
+    my ($self) = @_;
+
+    return $self->_post_request( { path => '/preview/subset.json' } );
+} # partial_preview()
+
 sub preview {
     my ($self) = @_;
 
-    my $url = $lpurl . $self->{slug} . '/preview.json';
-    my $form = {
-	api_key => $self->{api_key},
-    };
-    my $res = $self->{ua}->post($url, $form);
-
-    if ($res->is_success) {
-	return $res->decoded_content;
-    }
-    return;
+    return $self->_post_request( { path => '/preview.json' } );
 } # preview()
 
 sub publish {
     my ($self,$opt) = @_;
+    my $var = {};
 
-    my $url = $lpurl . $self->{slug} . '/publish.json';
-    my $form = {
-	api_key => $self->{api_key},
-    };
     if ($opt->{email_readers}) {
-	$form->{'publish[email_readers]'} = 'true';
+	$var->{'publish[email_readers]'} = 'true';
     }
     if (exists $opt->{release_notes}) {
-	$form->{'publish[release_notes]'} = $opt->{release_notes};
+	$var->{'publish[release_notes]'} = $opt->{release_notes};
     }
-    my $res = $self->{ua}->post($url, $form);
-
-    if ($res->is_success) {
-	return $res->decoded_content;
-    }
-    return;
+    return $self->_post_request( { path => '/publish.json', var => $var } );
 } # publish()
 
 sub _get_request {
@@ -106,6 +95,24 @@ sub _get_request {
     }
     return;
 } # _get_request()
+
+sub _post_request {
+    my ($self,$opt) = @_;
+    my $url  = $lpurl . $self->{slug} . $opt->{path};
+    my $form = { api_key => $self->{api_key}, };
+
+    if ($opt->{var}) {
+	foreach my $var (keys %{$opt->{var}}) {
+	    $form->{$var} = $opt->{var}->{$var};
+	}
+    }
+    my $res = $self->{ua}->post($url, $form);
+
+    if ($res->is_success) {
+	return $res->decoded_content;
+    }
+    return;
+} # _post_request()
 
 1; # Magic true value required at end of module
 __END__
@@ -177,6 +184,10 @@ Get the status of the last job.
 =head2 get_sales_data()
 
 Get the sales data.
+
+=head2 partial_preview()
+
+Start a partial preview of your book using Preview.txt.
 
 =head2 preview()
 
