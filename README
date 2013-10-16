@@ -13,6 +13,7 @@ Using this perl module you are able to
 * query the job status of a preview or a publishing command
 * get the summary sales data and
 * get data about individual purchases
+* create, list and update coupons for your book
 
 from your perl program.
 

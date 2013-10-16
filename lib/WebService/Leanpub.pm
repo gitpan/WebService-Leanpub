@@ -4,8 +4,10 @@ use warnings;
 use strict;
 use Carp;
 
-use version; our $VERSION = qv('0.1.0');
+use version; our $VERSION = qv('0.2.0');
 
+use HTTP::Request::Common;
+use JSON;
 use LWP::UserAgent;
 use URI::Escape;
 
@@ -27,9 +29,78 @@ sub new {
     $self->{ua}      = LWP::UserAgent->new(
 	agent => "libwebservice-leanpub-perl/$VERSION",
     );
+    $self->{json}    = JSON->new;
 
     return $self;
 } # new()
+
+#----- coupons -----
+sub create_coupon {
+    my ($self,$opt) = @_;
+
+    unless ($opt->{coupon_code})	{ return; }
+    unless ($opt->{discounted_price})	{ return; }
+    unless ($opt->{start_date})		{ return; }
+
+    my $var = {
+	'coupon[coupon_code]'	   => $opt->{coupon_code},
+	'coupon[discounted_price]' => $opt->{discounted_price},
+	'coupon[start_date]'	   => $opt->{start_date},
+    };
+    
+    if ($opt->{end_date}) {
+	$var->{'coupon[end_date]'} = $opt->{end_date};
+    }
+    if ($opt->{has_uses_limit}) {
+	$var->{'coupon[has_uses_limit]'} = $opt->{has_uses_limit};
+    }
+    if ($opt->{max_uses}) {
+	$var->{'coupon[max_uses]'} = $opt->{max_uses};
+    }
+    if ($opt->{note}) {
+	$var->{'coupon[note]'} = $opt->{note};
+    }
+    if ($opt->{suspended}) {
+	$var->{'coupon[suspended]'} = $opt->{suspended};
+    }
+    return $self->_post_request( { path => '/coupons.json', var => $var } );
+} # create_coupon()
+
+sub get_coupon_list {
+    my ($self) = @_;
+
+    return $self->_get_request( { path => '/coupons.json' } );
+
+} # get_coupon_list()
+
+sub update_coupon {
+    my ($self,$opt) = @_;
+
+    unless ($opt->{coupon_code})    { return; }
+
+    my $cc = delete $opt->{coupon_code};
+    my $path = "/coupons/$cc.json";
+
+    _wash_coupon_opts($opt);
+    my $content = encode_json( $opt );
+
+    return $self->_put_request( { path => $path, content => $content } );
+} # update_coupon()
+
+sub _wash_coupon_opts {
+    my $opt = $_[0];
+    my $bool = sub {
+	return ($_[0] =~/^(no|false|0)$/i) ? 'false' : 'true';
+    };
+    if (exists $opt->{suspended}) {
+	$opt->{suspended} = $bool->($opt->{suspended});
+    }
+    if (exists $opt->{has_uses_limit}) {
+	$opt->{has_uses_limit} = $bool->($opt->{has_uses_limit});
+    }
+} # _wash_coupon_opts;
+
+#----- sales -----
 
 sub get_individual_purchases {
     my ($self,$opt) = @_;
@@ -39,19 +110,21 @@ sub get_individual_purchases {
 
 } # get_individual_purchases()
 
-sub get_job_status {
-    my ($self) = @_;
-
-    return $self->_get_request( { path => '/book_status.json' } );
-
-} # get_job_status()
-
 sub get_sales_data {
     my ($self) = @_;
 
     return $self->_get_request( { path => '/sales.json' } );
 
 } # get_sales_data()
+
+#----- jobs -----
+
+sub get_job_status {
+    my ($self) = @_;
+
+    return $self->_get_request( { path => '/book_status.json' } );
+
+} # get_job_status()
 
 sub partial_preview {
     my ($self) = @_;
@@ -77,6 +150,13 @@ sub publish {
     }
     return $self->_post_request( { path => '/publish.json', var => $var } );
 } # publish()
+
+#----- JSON functions -----
+sub pretty_json {
+    my $json = $_[0]->{json};
+    return $json->pretty->encode($json->decode($_[1]));
+} # pretty_json()
+#----- helper functions -----
 
 sub _get_request {
     my ($self,$opt) = @_;
@@ -113,6 +193,21 @@ sub _post_request {
     }
     return;
 } # _post_request()
+
+sub _put_request {
+    my ($self,$opt) = @_;
+    my $url = $lpurl . $self->{slug} . $opt->{path}
+            . '?api_key=' . $self->{api_key};
+
+    my $req = HTTP::Request::Common::PUT($url,
+	                                 'Content-Type' => 'application/json',
+	                                 'Content' => $opt->{content});
+    my $res = $self->{ua}->request($req);
+    if ($res->is_success) {
+	return $res->decoded_content;
+    }
+    return;
+} # _put_request();
 
 1; # Magic true value required at end of module
 __END__
@@ -211,6 +306,72 @@ readers.
 The value corresponding to this key is sent as release note.
 
 =back
+
+=head2 create_coupon( $opt )
+
+Create a coupon.
+
+The argument C<$opt> is a hash reference with the following keys:
+
+=over
+
+=item coupon_code
+
+Required.
+The coupon code for this coupon. This must be unique for the book.
+
+=item discounted_price
+
+Required.
+The amount the reader will pay when using the coupon.
+
+=item start_date
+
+Required.
+The date the coupon is valid from. Formatted like YYYY-MM-DD.
+
+=item end_date
+
+The date the coupon is valid until. Formatted like YYYY-MM-DD.
+
+=item has_uses_limit
+
+Whether or not the coupon has a uses limit.
+
+Values '0', 'false', 'no' count as false, all other values as true.
+
+=item max_uses
+
+The max number of uses available for a coupon. An integer.
+
+=item note
+
+A description of the coupon. This is just used to remind you of what it was
+for.
+
+=item suspended
+
+Whether or not the coupon is suspended.
+
+Values '0', 'false', 'no' count as false, all other values as true.
+
+=back
+
+=head2 update_coupon( $opt )
+
+Update a coupon.
+
+Takes the same argumentes for C<$opt>) as I<create_coupon()> but only the key
+C<coupon_code> is required, all others are optional.
+
+=head2 get_coupon_list()
+
+Returns a list of the coupons for the book formatted as JSON.
+
+=head2 pretty_json( $json )
+
+This is just a convenience function for pretty printing the output of the
+C<get_*()> functions.
 
 =head1 DIAGNOSTICS
 

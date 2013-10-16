@@ -39,17 +39,17 @@ my $cmd = shift;
 
 pod2usage(0) unless ($cmd);
 
-my $wl = WebService::Leanpub->new($opt{api_key},$opt{slug});
+my $wl   = WebService::Leanpub->new($opt{api_key},$opt{slug});
 
 if ($cmd =~ /^individual/i) {
     my %lopt = ( page => 1, );
     GetOptions( \%lopt, 'page=i' );
     my $ip = $wl->get_individual_purchases( { page => $lopt{page} } );
-    print $ip if ($ip);
+    print $wl->pretty_json($ip) if ($ip);
 }
 elsif ($cmd =~ /^job_status/i) {
     my $js = $wl->get_job_status();
-    print $js if ($js);
+    print $wl->pretty_json($js) if ($js);
 }
 elsif ($cmd =~ /^partial/i) {
     my $pv = $wl->partial_preview();
@@ -72,12 +72,47 @@ elsif ($cmd =~ /^publish/i) {
 }
 elsif ($cmd =~ /^sales/i) {
     my $sd = $wl->get_sales_data();
-    print $sd if ($sd);
+    print $wl->pretty_json($sd) if ($sd);
+}
+elsif ($cmd =~ /^coupons/i) {
+    my $cl = $wl->get_coupon_list();
+    print $wl->pretty_json($cl) if ($cl);
+}
+elsif ($cmd =~ /^create_coupon/i) {
+    my %lopt = ();
+    GetOptions( \%lopt,
+                'coupon_code=s', 'discounted_price=s', 'start_date=s',
+                'end_date=s', 'has_uses_limit', 'max_uses=i',
+                'note=s', 'suspended',
+              );
+    my $cc = $wl->create_coupon(\%lopt);
+    if ($cc) {
+        print $cc;
+    }
+    else {
+        die "problem creating coupon";
+    }
+}
+elsif ($cmd =~ /^update_coupon/i) {
+    my %lopt = ();
+    GetOptions( \%lopt,
+                'coupon_code=s', 'discounted_price=s', 'start_date=s',
+                'end_date=s', 'has_uses_limit!', 'max_uses=i',
+                'note=s', 'suspended!',
+              );
+    my $uc = $wl->update_coupon(\%lopt);
+    if ($uc) {
+        print $uc;
+    }
+    else {
+        die "problem creating coupon";
+    }
 }
 
 exit 0;
 
 #--- only functions following ---
+
 sub read_config {
     my ($opt) = @_;
     my $config;
@@ -154,13 +189,6 @@ Print $WebService::Leanpub::VERSION and exit.
 
 =over 8
 
-=item individual_purchases [ -page=p ]
-
-Retrieve data about individual purchases.
-
-This command takes the option C<< -page >> to set the page of the individual
-purchases report to be retrieved.
-
 =item job_status
 
 Retrieve the status of the last job.
@@ -183,11 +211,11 @@ This command takes the following command options:
 
 =over
 
-=item C<< -email_readers >>
+=item -email_readers
 
 Email readers, notifying them that the book has been updated.
 
-=item C<< -release_notes=notes >>
+=item -release_notes=notes
 
 The release notes to be included in the email to the readers.
 
@@ -196,6 +224,70 @@ The release notes to be included in the email to the readers.
 =item sales_data
 
 Retrieve a summary of sales data.
+
+=item individual_purchases [ -page=p ]
+
+Retrieve data about individual purchases.
+
+This command takes the option C<< -page >> to set the page of the individual
+purchases report to be retrieved.
+
+=item coupons options
+
+Get a list of coupons available for the book.
+
+=item create_coupon
+
+Create a new coupon for your book.
+
+This function takes the following command options:
+
+=over
+
+=item -coupon_code=code
+
+Required.
+The coupon code for this coupon. This must be unique for the book.
+
+=item -discounted_price=price
+
+Required.
+The amount the reader will pay when using the coupon.
+
+=item -start_date=YYYY-MM-DD
+
+Required.
+The date the coupon is valid from.
+
+=item -end_date=YYYY-MM-DD
+
+The date the coupon is valid until.
+
+=item -has_uses_limit
+
+Whether or not the coupon has a uses limit.
+
+=item -max_uses=uses
+
+The max number of uses available for a coupon. An integer.
+
+=item -note=note_for_me
+
+A description of the coupon. This is just used to remind you of what it was
+for.
+
+=item -suspended
+
+Whether or not the coupon is suspended.
+
+=back
+
+=item update_coupon options
+
+Update a coupon.
+
+This command takes the same argumentes as create_coupon but only the option
+--coupon_code is required, all others are optional.
 
 =back
 

@@ -21,6 +21,8 @@
       },
       "runtime" : {
          "requires" : {
+            "HTTP::Request::Common" : 0,
+            "JSON" : 0,
             "LWP::UserAgent" : 0,
             "Test::More" : 0,
             "URI::Escape" : 0,
@@ -31,7 +33,7 @@
    "provides" : {
       "WebService::Leanpub" : {
          "file" : "lib/WebService/Leanpub.pm",
-         "version" : "v0.1.0"
+         "version" : "v0.2.0"
       }
    },
    "release_status" : "stable",
@@ -40,5 +42,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "v0.1.0"
+   "version" : "v0.2.0"
 }
