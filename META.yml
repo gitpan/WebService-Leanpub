@@ -15,7 +15,7 @@ name: WebService-Leanpub
 provides:
   WebService::Leanpub:
     file: lib/WebService/Leanpub.pm
-    version: v0.2.0
+    version: v0.3.0
 requires:
   HTTP::Request::Common: 0
   JSON: 0
@@ -25,4 +25,4 @@ requires:
   version: 0
 resources:
   license: http://dev.perl.org/licenses/
-version: v0.2.0
+version: v0.3.0

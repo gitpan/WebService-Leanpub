@@ -33,7 +33,7 @@
    "provides" : {
       "WebService::Leanpub" : {
          "file" : "lib/WebService/Leanpub.pm",
-         "version" : "v0.2.0"
+         "version" : "v0.3.0"
       }
    },
    "release_status" : "stable",
@@ -42,5 +42,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "v0.2.0"
+   "version" : "v0.3.0"
 }

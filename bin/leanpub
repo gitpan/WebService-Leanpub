@@ -41,7 +41,11 @@ pod2usage(0) unless ($cmd);
 
 my $wl   = WebService::Leanpub->new($opt{api_key},$opt{slug});
 
-if ($cmd =~ /^individual/i) {
+if ($cmd =~ /^summary/i) {
+    my $js = $wl->summary();
+    print $wl->pretty_json($js) if ($js);
+}
+elsif ($cmd =~ /^individual/i) {
     my %lopt = ( page => 1, );
     GetOptions( \%lopt, 'page=i' );
     my $ip = $wl->get_individual_purchases( { page => $lopt{page} } );
@@ -51,12 +55,26 @@ elsif ($cmd =~ /^job_status/i) {
     my $js = $wl->get_job_status();
     print $wl->pretty_json($js) if ($js);
 }
-elsif ($cmd =~ /^partial/i) {
-    my $pv = $wl->partial_preview();
+elsif ($cmd =~ /^(partial|subset)/i) {
+    my $pv = $wl->subset();
     print $pv if ($pv);
 }
 elsif ($cmd =~ /^preview/i) {
     my $pv = $wl->preview();
+    print $pv if ($pv);
+}
+elsif ($cmd =~ /^single/i) {
+    my $fname = shift;
+
+    pod2usage('need a filename with command single')    unless ($fname);
+    open(my $input, '<', $fname) or die "Can't open $fname: $!";
+
+    local $/;
+    undef $/;
+    my $content = <$input>;
+    close $input;
+
+    my $pv = $wl->single({ content => $content });
     print $pv if ($pv);
 }
 elsif ($cmd =~ /^publish/i) {
@@ -187,7 +205,11 @@ Print $WebService::Leanpub::VERSION and exit.
 
 =head2 COMMANDS
 
-=over 8
+=over
+
+=item summary
+
+Get information about the book.
 
 =item job_status
 
@@ -195,11 +217,19 @@ Retrieve the status of the last job.
 
 =item partial_preview
 
-Start a partial preview of your book using Preview.txt.
+Start a partial preview of your book using Subset.txt.
+
+=item subset
+
+Start a partial preview of your book using Subset.txt.
 
 =item preview
 
 Start a preview of your book.
+
+=item single filename
+
+Create a preview from a single file.
 
 =item publish [ options ]
 

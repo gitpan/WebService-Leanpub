@@ -4,7 +4,7 @@ use warnings;
 use strict;
 use Carp;
 
-use version; our $VERSION = qv('0.2.0');
+use version; our $VERSION = qv('0.3.0');
 
 use HTTP::Request::Common;
 use JSON;
@@ -151,6 +151,31 @@ sub publish {
     return $self->_post_request( { path => '/publish.json', var => $var } );
 } # publish()
 
+sub single {
+    my ($self,$opt) = @_;
+
+    if ($opt->{content}) {
+	my $json = JSON->new->encode({ 'content' => $opt->{content} });
+	return $self->_json_post_request({ path => '/preview/single.json'
+					 , content => $json });
+    }
+    else {
+	return;
+    }
+} # single()
+
+sub subset {
+    my ($self) = @_;
+
+    return $self->_post_request( { path => '/preview/subset.json' } );
+} # subset()
+
+sub summary {
+    my ($self) = @_;
+
+    return $self->_get_request( { path => '.json' } );
+} # summary()
+
 #----- JSON functions -----
 sub pretty_json {
     my $json = $_[0]->{json};
@@ -175,6 +200,21 @@ sub _get_request {
     }
     return;
 } # _get_request()
+
+sub _json_post_request {
+    my ($self,$opt) = @_;
+    my $url  = $lpurl . $self->{slug} . $opt->{path}
+             . '?api_key=' .  $self->{api_key};
+    my @args = (
+	'Content_Type' => 'application/json; charset=utf-8',
+	'Content'      => $opt->{content},
+    );
+    my $res = $self->{ua}->post($url, @args);
+
+    if ($res->is_success) {
+	return $res->decoded_content;
+    }
+} # _json_post_request()
 
 sub _post_request {
     my ($self,$opt) = @_;
@@ -234,6 +274,8 @@ This document describes WebService::Leanpub version 0.0.1
 
     $wl->preview();
 
+    $wl->subset();
+
     $wl->get_sales_data( { slug => $slug } );
 
 =head1 DESCRIPTION
@@ -282,11 +324,29 @@ Get the sales data.
 
 =head2 partial_preview()
 
-Start a partial preview of your book using Preview.txt.
+Start a partial preview of your book using Subset.txt.
+
+=head2 subset()
+
+Start a partial preview of your book using Subset.txt.
 
 =head2 preview()
 
 Start a preview of your book.
+
+=head2 single( $opt )
+
+Generate a preview of a single file.
+
+The argument C<$opt> is a hash reference with the following keys and values:
+
+=over
+
+=item content
+
+The content of the file in a scalar string.
+
+=back
 
 =head2 publish( $opt )
 
@@ -372,6 +432,13 @@ Returns a list of the coupons for the book formatted as JSON.
 
 This is just a convenience function for pretty printing the output of the
 C<get_*()> functions.
+
+=head2 summary()
+
+This returns information about the book.
+
+Since this API function does not need an API key, this is the only method that
+returns meaningful data if you provide a wrong API key.
 
 =head1 DIAGNOSTICS
 
